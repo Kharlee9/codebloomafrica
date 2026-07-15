@@ -164,7 +164,7 @@
   }
   @media (max-width:768px){
     .hero h1{
-      max-width:280px;
+      max-width:90%;
     }
   }
   .hero h1 mark{
