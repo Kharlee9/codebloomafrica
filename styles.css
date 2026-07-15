@@ -207,12 +207,12 @@
   }
   .float-card{
     position:absolute;
-    width:130px;
+    width:180px;
     height:auto;
     filter:drop-shadow(0 8px 20px rgba(0,0,0,.1));
   }
   .float-left{ left:6%; bottom:130px; }
-  .float-right{ right:6%; top:170px; width:210px; }
+  .float-right{ right:6%; top:170px; }
 
   /* ============ MARQUEE ============ */
   .marquee{
