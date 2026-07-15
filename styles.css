@@ -1,4 +1,4 @@
-  :root{
+:root{
     --bg: #f6f5ee;
     --black: #111111;
     --true-black: #000000;
@@ -101,6 +101,8 @@
     font-family:'Poppins',sans-serif;
     font-weight:700;
     font-size:19px;
+    position:relative;
+    z-index:110;
   }
   .logo img{width:34px; height:34px;}
   .nav-links{
