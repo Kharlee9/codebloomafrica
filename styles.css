@@ -207,7 +207,7 @@
   }
   .float-card{
     position:absolute;
-    width:230px;
+    width:130px;
     height:auto;
     filter:drop-shadow(0 8px 20px rgba(0,0,0,.1));
   }
