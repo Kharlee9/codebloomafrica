@@ -187,8 +187,8 @@
   }
 
    @media (max-width: 768px) {
-     .typewriter{ 
-       display: block;
+     #typewriter-text{ 
+       display: block !important;
      }
    }
 
