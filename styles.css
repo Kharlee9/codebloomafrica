@@ -166,6 +166,8 @@
     .hero h1{
       max-width:100%;
     }
+
+    
   }
   .hero h1 mark{
     background:var(--yellow);
@@ -183,7 +185,13 @@
     border-right:3px solid var(--black);
     animation:typing 2s steps(12, end), blink .75s step-end infinite;
   }
-  
+
+   @media (max-width: 768px) {
+     .typewriter{ 
+       display: block;
+     }
+   }
+
   @keyframes typing{
     from{ width:0; }
     to{ width:100%; }
