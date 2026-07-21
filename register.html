@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — CodeBloomAfrica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="register.css">
+</head>
+<body>
+
+<div class="reg-page">
+
+  <div class="reg-form-col">
+    <a href="index.html" class="logo reg-logo">
+      <img src="images/image1.png" alt="CodeBloomAfrica logo">
+      CodeBloomAfrica
+    </a>
+
+    <div class="reg-form-wrap">
+      <span class="eyebrow">◆ Register</span>
+      <h1>Start your tech journey.</h1>
+      <p class="reg-sub">Fill in your details below, then proceed to payment to secure your spot.</p>
+
+      <form id="registrationForm" class="reg-form" novalidate>
+        <div class="reg-row">
+          <div class="reg-field">
+            <label for="firstName">First name</label>
+            <input type="text" id="firstName" name="firstName" placeholder="Jane" required>
+          </div>
+          <div class="reg-field">
+            <label for="lastName">Last name</label>
+            <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+          </div>
+        </div>
+
+        <div class="reg-field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="jane@email.com" required>
+        </div>
+
+        <div class="reg-field">
+          <label for="phone">Phone number <span class="reg-hint">(preferably WhatsApp)</span></label>
+          <input type="tel" id="phone" name="phone" placeholder="+234 800 000 0000" required>
+        </div>
+
+        <div class="reg-field">
+          <label for="course">Course</label>
+          <select id="course" name="course" required>
+            <option value="" disabled selected>Select a course</option>
+            <option value="Product Design UI/UX">Product Design UI/UX</option>
+            <option value="UI/UX Design">UI/UX Design</option>
+            <option value="Data Analysis">Data Analysis</option>
+            <option value="Product Management">Product Management</option>
+            <option value="Digital Marketing">Digital Marketing</option>
+          </select>
+        </div>
+
+        <p id="formError" class="reg-error" hidden></p>
+
+        <button type="submit" class="btn btn-dark reg-submit" id="submitBtn">
+          <span id="submitLabel">Proceed to payment</span> <span class="arrow">→</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="reg-flyer-col">
+    <img src="images/flyer.jpg" alt="CodeBloomAfrica cohort flyer">
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="register.js"></script>
+</body>
+</html>

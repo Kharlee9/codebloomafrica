@@ -1,0 +1,134 @@
+.reg-page{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  min-height:100vh;
+}
+
+.reg-form-col{
+  padding:48px 64px;
+  display:flex;
+  flex-direction:column;
+}
+
+.reg-logo{
+  font-family:'Poppins',sans-serif;
+  font-weight:700;
+  font-size:19px;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:48px;
+}
+.reg-logo img{width:34px; height:34px;}
+
+.reg-form-wrap{
+  max-width:440px;
+  margin:auto 0;
+  width:100%;
+}
+
+.reg-form-wrap h1{
+  font-size:clamp(30px,3.4vw,40px);
+  margin:16px 0 10px;
+}
+
+.reg-sub{
+  color:var(--muted);
+  font-size:15px;
+  margin-bottom:32px;
+}
+
+.reg-form{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.reg-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.reg-field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.reg-field label{
+  font-size:13px;
+  font-weight:600;
+}
+
+.reg-hint{
+  font-weight:400;
+  color:var(--muted);
+}
+
+.reg-field input,
+.reg-field select{
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+  padding:13px 16px;
+  border-radius:var(--radius-sm);
+  border:1.5px solid var(--border);
+  background:#fff;
+  color:var(--black);
+  outline:none;
+  transition:border-color .15s ease;
+}
+
+.reg-field input:focus,
+.reg-field select:focus{
+  border-color:var(--black);
+}
+
+.reg-field select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  background-size:16px;
+  padding-right:40px;
+}
+
+.reg-submit{
+  justify-content:center;
+  width:100%;
+  margin-top:8px;
+  font-size:16px;
+  padding:15px 26px;
+}
+
+.reg-submit:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none !important;
+}
+
+.reg-error{
+  background:#fde8e8;
+  color:#a3231c;
+  font-size:13.5px;
+  padding:10px 14px;
+  border-radius:var(--radius-sm);
+}
+
+.reg-flyer-col{
+  background:var(--black);
+}
+
+.reg-flyer-col img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+@media (max-width:900px){
+  .reg-page{grid-template-columns:1fr;}
+  .reg-flyer-col{height:280px; order:-1;}
+  .reg-form-col{padding:32px 24px;}
+  .reg-form-wrap{margin:24px 0;}
+  .reg-row{grid-template-columns:1fr;}
+}
