@@ -175,3 +175,70 @@
       document.body.style.overflow = '';
     });
   });
+
+  // Why CodeBloom image slider - autoplay + arrow + dot controls
+  const whySlider = document.getElementById('whySlider');
+  if(whySlider){
+    const slides = Array.from(whySlider.querySelectorAll('.slide'));
+    const dotsWrap = document.getElementById('whyDots');
+    const prevBtn = document.getElementById('whyPrev');
+    const nextBtn = document.getElementById('whyNext');
+    let current = 0;
+    let timer = null;
+    const AUTOPLAY_MS = 3000;
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      if(i === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(dot);
+    });
+    const dots = Array.from(dotsWrap.children);
+
+    function render(){
+      slides.forEach((s, i) => s.classList.toggle('active', i === current));
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    function goTo(index){
+      current = (index + slides.length) % slides.length;
+      render();
+      restart();
+    }
+
+    function next(){ goTo(current + 1); }
+    function prev(){ goTo(current - 1); }
+
+    function restart(){
+      if(timer) clearInterval(timer);
+      timer = setInterval(next, AUTOPLAY_MS);
+    }
+
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    restart();
+  }
+
+  // Subtle scroll-reveal animation (fade + rise), respects reduced-motion
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!prefersReducedMotion){
+    const revealTargets = document.querySelectorAll(
+      'section .section-head, .school-card, .why-card, .step, .testi-card, ' +
+      '.community-item, .outcome-card, .faq-item, .cta-box, .why-image, ' +
+      '.community-visual, .stats-row'
+    );
+    revealTargets.forEach(el => el.classList.add('reveal'));
+
+    const revealObserver = new IntersectionObserver((entries, obs) => {
+      entries.forEach((entry, i) => {
+        if(entry.isIntersecting){
+          entry.target.style.transitionDelay = (i % 3) * 90 + 'ms';
+          entry.target.classList.add('revealed');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    revealTargets.forEach(el => revealObserver.observe(el));
+  }
