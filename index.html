@@ -24,10 +24,10 @@
       <li><a href="#how-it-works">How to Apply</a></li>
       <li><a href="#community">Community</a></li>
       <li><a href="#faq">FAQs</a></li>
-      <li><a href="#" class="btn btn-dark nav-cta-mobile">Register <span class="arrow">→</span></a></li>
+      <li><a href="register.html" class="btn btn-dark nav-cta-mobile">Register <span class="arrow">→</span></a></li>
     </ul>
     <div class="nav-cta">
-      <a href="#" class="btn btn-dark">Register <span class="arrow">→</span></a>
+      <a href="register.html" class="btn btn-dark">Register <span class="arrow">→</span></a>
       <button class="burger" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </nav>
@@ -49,7 +49,7 @@
   <p class="sub">Join a community of aspiring tech enthusiasts learning the skills they need to succeed in the digital world. Start your journey today!</p>
 
   <div class="hero-ctas">
-    <a href="#" class="btn btn-dark">Register <span class="arrow">→</span></a>
+    <a href="register.html" class="btn btn-dark">Register <span class="arrow">→</span></a>
     <a href="#schools" class="btn btn-outline">View curriculum</a>
   </div>
 
@@ -141,11 +141,17 @@
 
     <div class="why-grid">
       <div class="why-image">
-        <img src="images/image13.jpg" alt="CodeBloom students learning together">
-        <div class="why-arrows">
-          <button aria-label="Previous">←</button>
-          <button aria-label="Next">→</button>
+        <div class="why-slider" id="whySlider">
+          <img class="slide active" src="images/slide-image1.png" alt="CodeBloom students learning together 1">
+          <img class="slide" src="images/slide-image2.png" alt="CodeBloom students learning together 2">
+          <img class="slide" src="images/slide-image3.png" alt="CodeBloom students learning together 3">
+          <img class="slide" src="images/slide-image4.png" alt="CodeBloom students learning together 4">
         </div>
+        <div class="why-arrows">
+          <button aria-label="Previous" id="whyPrev">←</button>
+          <button aria-label="Next" id="whyNext">→</button>
+        </div>
+        <div class="why-dots" id="whyDots"></div>
       </div>
       <div>
         <h3 class="why-title">Why <span>Choose us?</span></h3>
@@ -361,7 +367,7 @@
         <span class="sticker s-white rot-r">in tech?</span>
       </div>
       <p>Join thousands of Africans learning tech skill and building careers to thrive in a digital world.</p>
-      <a href="#" class="btn btn-dark">Register now <span class="arrow">→</span></a>
+      <a href="register.html" class="btn btn-dark">Register now <span class="arrow">→</span></a>
     </div>
   </div>
 </section>
