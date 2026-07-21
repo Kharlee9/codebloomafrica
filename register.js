@@ -1,8 +1,8 @@
 // ============================================================
 // CONFIG — fill these in before going live
 // ============================================================
-const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';       // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';      // Project Settings > API > anon public key
+const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';       // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaHh5bnhnb3pjZ21lY3RycmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMTQ3NzEsImV4cCI6MjA5OTY5MDc3MX0.VZd6RVws36E3UexzTT-ynBjyYE36vDGAZx_YIe9AHU4';      // Project Settings > API > anon public key
 const PAYMENT_REDIRECT_URL = 'https://example.com/pay';  // your external payment link
 // ============================================================
 
