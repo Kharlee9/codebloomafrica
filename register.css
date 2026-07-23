@@ -44,6 +44,15 @@
   gap:18px;
 }
 
+.reg-row{
+  display:grid;
+  gap:14px;
+}
+
+input {
+  min-width: 30px !important;
+  max-width: 100% !important;
+}
 .reg-field{
   display:flex;
   flex-direction:column;
