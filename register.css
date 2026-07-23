@@ -51,6 +51,7 @@
 
 input {
   min-width: 30px !important;
+  width: 100% !important;
   max-width: 100% !important;
 }
 .reg-field{
