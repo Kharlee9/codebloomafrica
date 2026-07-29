@@ -15,11 +15,11 @@ const SITE_URL = process.env.SITE_URL; // e.g. https://codebloomafrica.netlify.a
 
 // Course fees in Naira — update to your real prices.
 const COURSE_PRICES = {
-  'Product Design UI/UX': 10000,
-  'UI/UX Design': 10000,
-  'Data Analysis': 10000,
-  'Product Management': 10000,
-  'Digital Marketing': 10000,
+  'Product Design UI/UX': 50000,
+  'UI/UX Design': 50000,
+  'Data Analysis': 50000,
+  'Product Management': 50000,
+  'Digital Marketing': 50000,
 };
 
 exports.handler = async (event) => {

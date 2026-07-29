@@ -1,0 +1,12 @@
+{
+  "name": "codebloomafrica",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CodeBloomAfrica static site with Netlify Functions for Paystack + Supabase registration payments",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
