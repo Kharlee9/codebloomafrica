@@ -1,12 +1,13 @@
 // ============================================================
 // CONFIG — fill these in before going live
 // ============================================================
-const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';       // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaHh5bnhnb3pjZ21lY3RycmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMTQ3NzEsImV4cCI6MjA5OTY5MDc3MX0.VZd6RVws36E3UexzTT-ynBjyYE36vDGAZx_YIe9AHU4';      // Project Settings > API > anon public key
-const PAYMENT_REDIRECT_URL = 'https://example.com/pay';  // your external payment link
+// The anon key is safe to expose in browser code — it can ONLY insert
+// new registration rows (see supabase-schema.sql RLS policy), nothing else.
+const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';   // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Project Settings > API > anon public key
 // ============================================================
 
-const supabaseClient = (SUPABASE_URL.startsWith('http'))
+const supabaseClient = SUPABASE_URL.startsWith('http')
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
@@ -15,14 +16,19 @@ const submitBtn = document.getElementById('submitBtn');
 const submitLabel = document.getElementById('submitLabel');
 const formError = document.getElementById('formError');
 
-function showError(message){
+function showError(message) {
   formError.textContent = message;
   formError.hidden = false;
 }
 
-function clearError(){
+function clearError() {
   formError.hidden = true;
   formError.textContent = '';
+}
+
+function setLoading(isLoading, label) {
+  submitBtn.disabled = isLoading;
+  submitLabel.textContent = label;
 }
 
 form.addEventListener('submit', async (e) => {
@@ -35,51 +41,81 @@ form.addEventListener('submit', async (e) => {
   const phone = document.getElementById('phone').value.trim();
   const course = document.getElementById('course').value;
 
-  if(!firstName || !lastName || !email || !phone || !course){
+  // ---- Client-side validation ----
+  if (!firstName || !lastName || !email || !phone || !course) {
     showError('Please fill in every field before continuing.');
     return;
   }
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if(!emailPattern.test(email)){
+  if (!emailPattern.test(email)) {
     showError('Please enter a valid email address.');
     return;
   }
 
-  submitBtn.disabled = true;
-  submitLabel.textContent = 'Submitting…';
-
-  if(!supabaseClient){
-    console.warn('Supabase is not configured yet — skipping save and redirecting for testing.');
-    redirectToPayment({ firstName, lastName, email, phone, course });
+  const phonePattern = /^[+0-9\s-]{7,20}$/;
+  if (!phonePattern.test(phone)) {
+    showError('Please enter a valid phone number.');
     return;
   }
 
-  const { error } = await supabaseClient
-    .from('registrations')
-    .insert([{
-      first_name: firstName,
-      last_name: lastName,
-      email: email,
-      phone: phone,
-      course: course
-    }]);
-
-  if(error){
-    console.error('Supabase insert error:', error);
-    showError('Something went wrong saving your registration. Please try again.');
-    submitBtn.disabled = false;
-    submitLabel.textContent = 'Proceed to payment';
+  if (!supabaseClient) {
+    showError('Registration is not configured yet. Please contact the site admin.');
+    console.error('Supabase client not initialized — check SUPABASE_URL / SUPABASE_ANON_KEY in register.js');
     return;
   }
 
-  redirectToPayment({ firstName, lastName, email, phone, course });
+  setLoading(true, 'Saving your details…');
+
+  // Generate the registration ID client-side (instead of relying on
+  // Postgres RETURNING, which RLS SELECT policies would otherwise block
+  // for the anon/public key). This ID is what ties the registration to
+  // its payment record end-to-end.
+  const registrationId = crypto.randomUUID();
+
+  try {
+    // ---- 1. Save the registration to Supabase BEFORE payment ----
+    const { error: insertError } = await supabaseClient.from('registrations').insert([
+      {
+        id: registrationId,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+        course: course,
+      },
+    ]);
+
+    if (insertError) {
+      console.error('Supabase insert error:', insertError);
+      showError('Something went wrong saving your registration. Please try again.');
+      setLoading(false, 'Proceed to payment');
+      return;
+    }
+
+    // ---- 2. Ask our Netlify Function to initialize the Paystack transaction ----
+    setLoading(true, 'Redirecting to payment…');
+
+    const response = await fetch('/.netlify/functions/create-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registrationId, email, course }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.authorization_url) {
+      console.error('create-payment error:', data);
+      showError(data.error || 'Could not start payment. Please try again.');
+      setLoading(false, 'Proceed to payment');
+      return;
+    }
+
+    // ---- 3. Redirect the browser to Paystack Checkout ----
+    window.location.href = data.authorization_url;
+  } catch (err) {
+    console.error('Unexpected registration error:', err);
+    showError('Unexpected error. Please check your connection and try again.');
+    setLoading(false, 'Proceed to payment');
+  }
 });
-
-function redirectToPayment(data){
-  submitLabel.textContent = 'Redirecting…';
-  const url = new URL(PAYMENT_REDIRECT_URL);
-  url.searchParams.set('email', data.email);
-  url.searchParams.set('course', data.course);
-  window.location.href = url.toString();
-}
