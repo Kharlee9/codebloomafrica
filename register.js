@@ -3,8 +3,8 @@
 // ============================================================
 // The anon key is safe to expose in browser code — it can ONLY insert
 // new registration rows (see supabase-schema.sql RLS policy), nothing else.
-const SUPABASE_URL = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';   // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON_KEY = 'sb_secret_Wud5KHQ7wD1kjGkHnQdqFQ_izRijtqO'; // Project Settings > API > anon public key
+const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';   // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig'; // Project Settings > API > anon public key
 // ============================================================
 
 const supabaseClient = SUPABASE_URL.startsWith('http')
