@@ -1,0 +1,94 @@
+.status-page{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:32px 24px;
+  text-align:center;
+}
+
+.status-logo{
+  font-family:'Poppins',sans-serif;
+  font-weight:700;
+  font-size:19px;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  position:absolute;
+  top:32px;
+  left:32px;
+}
+.status-logo img{width:34px; height:34px;}
+
+.status-card{
+  max-width:460px;
+  width:100%;
+}
+
+.status-spinner{
+  width:44px;
+  height:44px;
+  margin:0 auto 28px;
+  border-radius:50%;
+  border:3px solid var(--border);
+  border-top-color:var(--black);
+  animation:spin .8s linear infinite;
+}
+
+.status-spinner.success{
+  border:none;
+  background:var(--mint);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  animation:none;
+}
+.status-spinner.success::after{
+  content:'✓';
+  font-size:22px;
+  font-weight:800;
+  color:#1c7a4a;
+}
+
+.status-spinner.failed{
+  border:none;
+  background:#fde8e8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  animation:none;
+}
+.status-spinner.failed::after{
+  content:'✕';
+  font-size:20px;
+  font-weight:800;
+  color:#a3231c;
+}
+
+@keyframes spin{
+  to{ transform:rotate(360deg); }
+}
+
+.status-card h1{
+  font-size:clamp(24px,3vw,30px);
+  margin-bottom:12px;
+}
+
+.status-message{
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.6;
+  margin-bottom:24px;
+}
+
+.status-actions{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+@media (max-width:600px){
+  .status-logo{ position:static; margin-bottom:40px; }
+}
