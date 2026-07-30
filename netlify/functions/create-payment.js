@@ -63,9 +63,12 @@ exports.handler = async (event) => {
   try {
     supabase = getSupabaseAdmin();
   } catch (err) {
-    console.error(err.message);
-    return respond(500, { error: 'Server misconfiguration' });
-  }
+    console.error(err);
+
+    return respond(500, {
+        error: err.message
+    });
+}
 
   // Confirm the registration exists and isn't already paid for.
   const { data: registration, error: fetchError } = await supabase
