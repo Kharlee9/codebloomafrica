@@ -4,9 +4,12 @@
 //
 // Paystack calls this endpoint server-to-server whenever a transaction
 // event fires. This is the SOURCE OF TRUTH for payment status — it fires
-// even if the customer closes their browser before returning to
-// payment-success.html, and it's protected by HMAC signature verification
-// so only genuine, unmodified requests from Paystack are ever processed.
+// even if the customer closes their browser before the InlineJS onSuccess
+// callback / verify-payment call completes, and it's protected by HMAC
+// signature verification so only genuine, unmodified requests from
+// Paystack are ever processed. Kept alongside the InlineJS v2 popup flow
+// as the reliability backstop (popup callbacks only fire if the tab stays
+// open and JS runs successfully).
 //
 // Configure in the Paystack Dashboard:
 // Settings > API Keys & Webhooks > Webhook URL

@@ -2,8 +2,8 @@
 //
 // GET /.netlify/functions/verify-payment?reference=xxxx
 //
-// Called by payment-success.html after the browser returns from Paystack
-// Checkout. Never trusts the redirect URL's implied status — it re-checks
+// Called by register.js immediately after PaystackPop's onSuccess callback
+// fires. Never trusts that client-side callback on its own — it re-checks
 // the transaction directly with Paystack and only then updates Supabase,
 // via the shared verifyAndRecordPayment() helper also used by the webhook.
 

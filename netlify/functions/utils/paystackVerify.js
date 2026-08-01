@@ -1,11 +1,11 @@
 // netlify/functions/utils/paystackVerify.js
 //
 // Shared logic: verify a transaction reference directly with Paystack
-// (never trust status passed in from the browser/URL alone), then persist
+// (never trust status passed in from the browser alone), then persist
 // the result to Supabase. Used by both verify-payment.js (triggered by the
-// browser on return from Checkout) and paystack-webhook.js (triggered
-// server-to-server by Paystack), so both paths always agree — and
-// processing is idempotent no matter which one runs first.
+// browser after the InlineJS onSuccess callback) and paystack-webhook.js
+// (triggered server-to-server by Paystack), so both paths always agree —
+// and processing is idempotent no matter which one runs first.
 
 async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
   // 1. Ask Paystack for the authoritative status of this transaction.
@@ -25,6 +25,7 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
   const course = tx.metadata && tx.metadata.course;
   const amountNaira = tx.amount / 100; // Paystack amounts are in kobo
   const paidAt = tx.paid_at || new Date().toISOString();
+  const transactionId = tx.id || null; // Paystack's numeric transaction id
 
   if (!registrationId) {
     throw new Error(`Transaction ${reference} is missing registrationId metadata`);
@@ -40,7 +41,14 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
     .maybeSingle();
 
   if (existingPayment && existingPayment.status === 'success') {
-    return { status: 'success', already_processed: true, course, amount: amountNaira, reference };
+    return {
+      status: 'success',
+      already_processed: true,
+      course,
+      amount: amountNaira,
+      reference,
+      transaction_id: transactionId,
+    };
   }
 
   // 3. Upsert the payments ledger record (unique on `reference`).
@@ -55,6 +63,7 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
           status: isSuccess ? 'success' : 'failed',
           email: tx.customer && tx.customer.email,
           paid_at: isSuccess ? paidAt : null,
+          transaction_id: transactionId,
           raw_response: tx,
         },
       ],
@@ -73,6 +82,7 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
         payment_reference: reference,
         payment_date: paidAt,
         payment_amount: amountNaira,
+        payment_transaction_id: transactionId,
       }
     : { payment_status: 'failed' };
 
@@ -85,7 +95,13 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
     throw new Error(`Failed to update registration: ${regError.message}`);
   }
 
-  return { status: isSuccess ? 'success' : 'failed', course, amount: amountNaira, reference };
+  return {
+    status: isSuccess ? 'success' : 'failed',
+    course,
+    amount: amountNaira,
+    reference,
+    transaction_id: transactionId,
+  };
 }
 
 module.exports = { verifyAndRecordPayment };

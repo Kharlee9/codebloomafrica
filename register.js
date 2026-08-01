@@ -1,10 +1,35 @@
+// register.js
+//
+// Registration + payment flow, rebuilt on Paystack InlineJS v2 using the
+// "Resume Transaction" pattern:
+// https://paystack.com/docs/developer-tools/inlinejs/#resume-transaction
+//
+//   1. Save the registration to Supabase (paid = false).
+//   2. Ask initialize-payment (server-side, uses the SECRET key) to
+//      initialize a Paystack transaction and return an access_code.
+//   3. Open the official Paystack popup in-page with
+//      popup.resumeTransaction(access_code, { onSuccess, onCancel, onError }).
+//      This single popup lets the customer pay with card, bank transfer,
+//      USSD, QR, or mobile money — Paystack handles all channel UI itself.
+//   4. On success, call verify-payment (server-side) to re-check the
+//      transaction directly with Paystack and persist the result — the
+//      client-side onSuccess callback is never trusted on its own.
+//   5. Redirect to payment-success.html.
+
 // ============================================================
 // CONFIG — fill these in before going live
 // ============================================================
-// The anon key is safe to expose in browser code — it can ONLY insert
-// new registration rows (see supabase-schema.sql RLS policy), nothing else.
-const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';   // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig'; // Project Settings > API > anon public key
+// The Supabase anon (publishable) key is safe to expose in browser code —
+// it can ONLY insert new registration rows (see supabase-schema.sql RLS
+// policy).
+const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';
+
+// No Paystack key is hardcoded here. This flow uses PaystackPop's
+// resumeTransaction(access_code) — the transaction (and the Paystack
+// public key it's tied to) was already created server-side by
+// initialize-payment.js using the SECRET key. The secret key never
+// reaches the browser, and no public key is needed on this page either.
 // ============================================================
 
 const supabaseClient = SUPABASE_URL.startsWith('http')
@@ -65,6 +90,12 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  if (typeof PaystackPop === 'undefined') {
+    showError('Payment is not available right now. Please refresh the page and try again.');
+    console.error('PaystackPop is not defined — check that the InlineJS v2 script tag loaded in register.html');
+    return;
+  }
+
   setLoading(true, 'Saving your details…');
 
   // Generate the registration ID client-side (instead of relying on
@@ -74,7 +105,7 @@ form.addEventListener('submit', async (e) => {
   const registrationId = crypto.randomUUID();
 
   try {
-    // ---- 1. Save the registration to Supabase BEFORE payment ----
+    // ---- 1. Save the registration to Supabase BEFORE payment (paid = false by default) ----
     const { error: insertError } = await supabaseClient.from('registrations').insert([
       {
         id: registrationId,
@@ -94,25 +125,67 @@ form.addEventListener('submit', async (e) => {
     }
 
     // ---- 2. Ask our Netlify Function to initialize the Paystack transaction ----
-    setLoading(true, 'Redirecting to payment…');
+    setLoading(true, 'Preparing payment…');
 
-    const response = await fetch('/.netlify/functions/create-payment', {
+    const initRes = await fetch('/.netlify/functions/initialize-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registrationId, email, course }),
     });
 
-    const data = await response.json();
+    const initData = await initRes.json();
 
-    if (!response.ok || !data.authorization_url) {
-      console.error('create-payment error:', data);
-      showError(data.error || 'Could not start payment. Please try again.');
+    if (!initRes.ok || !initData.access_code) {
+      console.error('initialize-payment error:', initData);
+      showError(initData.error || 'Could not start payment. Please try again.');
       setLoading(false, 'Proceed to payment');
       return;
     }
 
-    // ---- 3. Redirect the browser to Paystack Checkout ----
-    window.location.href = data.authorization_url;
+    // ---- 3. Open the official Paystack InlineJS v2 popup ----
+    setLoading(true, 'Opening payment…');
+
+    const popup = new PaystackPop();
+
+    popup.resumeTransaction(initData.access_code, {
+      onSuccess: async (transaction) => {
+        // ---- 4. Never trust the client callback alone — re-verify server-side ----
+        setLoading(true, 'Confirming payment…');
+
+        try {
+          const verifyRes = await fetch(
+            `/.netlify/functions/verify-payment?reference=${encodeURIComponent(transaction.reference)}`
+          );
+          const verifyData = await verifyRes.json();
+
+          if (verifyRes.ok && verifyData.status === 'success') {
+            // ---- 5. Success — go to the success page ----
+            const params = new URLSearchParams({
+              reference: transaction.reference,
+              course: verifyData.course || course,
+            });
+            window.location.href = `payment-success.html?${params.toString()}`;
+            return;
+          }
+
+          console.error('verify-payment did not confirm success:', verifyData);
+          showError('We could not confirm your payment. If you were charged, please contact support with your payment reference.');
+          setLoading(false, 'Proceed to payment');
+        } catch (err) {
+          console.error('verify-payment request failed:', err);
+          showError('We ran into a connection issue confirming your payment. Please contact support with your payment reference before trying again.');
+          setLoading(false, 'Proceed to payment');
+        }
+      },
+      onCancel: () => {
+        setLoading(false, 'Proceed to payment');
+      },
+      onError: (error) => {
+        console.error('Paystack popup error:', error && error.message);
+        showError('Something went wrong opening the payment window. Please try again.');
+        setLoading(false, 'Proceed to payment');
+      },
+    });
   } catch (err) {
     console.error('Unexpected registration error:', err);
     showError('Unexpected error. Please check your connection and try again.');

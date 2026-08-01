@@ -20,7 +20,8 @@ create table if not exists registrations (
   payment_status text not null default 'pending', -- pending | success | failed
   payment_reference text,
   payment_date timestamptz,
-  payment_amount numeric
+  payment_amount numeric,
+  payment_transaction_id bigint -- Paystack's numeric transaction id
 );
 
 -- If `registrations` already existed from an earlier version of this schema
@@ -30,6 +31,7 @@ alter table registrations add column if not exists payment_status text not null 
 alter table registrations add column if not exists payment_reference text;
 alter table registrations add column if not exists payment_date timestamptz;
 alter table registrations add column if not exists payment_amount numeric;
+alter table registrations add column if not exists payment_transaction_id bigint;
 
 alter table registrations enable row level security;
 
@@ -54,9 +56,14 @@ create table if not exists payments (
   status text not null default 'pending', -- pending | success | failed
   email text,
   paid_at timestamptz,
+  transaction_id bigint, -- Paystack's numeric transaction id
   raw_response jsonb,
   created_at timestamptz default now()
 );
+
+-- If `payments` already existed from an earlier version of this schema,
+-- add the column now without touching existing data.
+alter table payments add column if not exists transaction_id bigint;
 
 create index if not exists payments_registration_id_idx on payments(registration_id);
 

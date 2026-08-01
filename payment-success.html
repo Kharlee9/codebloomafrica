@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment Status — CodeBloomAfrica</title>
+<title>Registration Successful — CodeBloomAfrica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,13 +19,18 @@
     CodeBloomAfrica
   </a>
 
-  <div class="status-card" id="statusCard">
-    <div class="status-spinner" id="statusSpinner"></div>
-    <h1 id="statusTitle">Confirming your payment…</h1>
-    <p id="statusMessage" class="status-message">
-      Please hold on while we verify your transaction with Paystack. Don't close this page.
+  <div class="status-card">
+    <div class="status-spinner success"></div>
+    <h1>Registration Successful</h1>
+    <p class="status-message" id="statusMessage">
+      You're all set! A confirmation has been recorded for your course. Join our WhatsApp community below to get next steps and connect with your cohort.
     </p>
-    <div id="statusActions" class="status-actions" hidden></div>
+    <div class="status-actions">
+      <a href="https://chat.whatsapp.com/your-invite-code" target="_blank" rel="noopener" class="btn btn-dark">
+        Join WhatsApp Community <span class="arrow">→</span>
+      </a>
+      <a href="index.html" class="btn btn-outline">Back to home</a>
+    </div>
   </div>
 </div>
 
