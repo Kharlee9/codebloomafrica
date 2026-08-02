@@ -79,8 +79,13 @@ exports.handler = async (event) => {
     .maybeSingle();
 
   if (fetchError) {
+    // Usually means Netlify env vars point at the wrong Supabase project,
+    // the service-role key is invalid, or SUPABASE_URL is mistyped.
     console.error('Registration lookup failed:', fetchError);
-    return respond(500, { error: 'Could not look up registration' });
+    return respond(500, {
+      error: 'Could not look up registration',
+      details: fetchError.message || String(fetchError),
+    });
   }
 
   if (!registration) {

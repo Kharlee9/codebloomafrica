@@ -79,7 +79,10 @@ exports.handler = async (event) => {
 
   if (fetchError) {
     console.error('Registration lookup failed:', fetchError);
-    return respond(500, { error: 'Could not look up registration' });
+    return respond(500, {
+      error: 'Could not look up registration',
+      details: fetchError.message || String(fetchError),
+    });
   }
 
   if (!registration) {
