@@ -52,23 +52,29 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
   }
 
   // 3. Upsert the payments ledger record (unique on `reference`).
-  const { error: paymentError } = await supabase
+  // Prefer writing transaction_id when the column exists; fall back if the
+  // project was created from an older schema that never added it.
+  const paymentRow = {
+    registration_id: registrationId,
+    reference,
+    amount: amountNaira,
+    status: isSuccess ? 'success' : 'failed',
+    email: tx.customer && tx.customer.email,
+    paid_at: isSuccess ? paidAt : null,
+    transaction_id: transactionId,
+    raw_response: tx,
+  };
+
+  let { error: paymentError } = await supabase
     .from('payments')
-    .upsert(
-      [
-        {
-          registration_id: registrationId,
-          reference,
-          amount: amountNaira,
-          status: isSuccess ? 'success' : 'failed',
-          email: tx.customer && tx.customer.email,
-          paid_at: isSuccess ? paidAt : null,
-          transaction_id: transactionId,
-          raw_response: tx,
-        },
-      ],
-      { onConflict: 'reference' }
-    );
+    .upsert([paymentRow], { onConflict: 'reference' });
+
+  if (paymentError && /transaction_id/i.test(paymentError.message)) {
+    delete paymentRow.transaction_id;
+    ({ error: paymentError } = await supabase
+      .from('payments')
+      .upsert([paymentRow], { onConflict: 'reference' }));
+  }
 
   if (paymentError) {
     throw new Error(`Failed to upsert payments record: ${paymentError.message}`);
@@ -86,10 +92,18 @@ async function verifyAndRecordPayment(reference, supabase, paystackSecretKey) {
       }
     : { payment_status: 'failed' };
 
-  const { error: regError } = await supabase
+  let { error: regError } = await supabase
     .from('registrations')
     .update(registrationUpdate)
     .eq('id', registrationId);
+
+  if (regError && /payment_transaction_id/i.test(regError.message)) {
+    delete registrationUpdate.payment_transaction_id;
+    ({ error: regError } = await supabase
+      .from('registrations')
+      .update(registrationUpdate)
+      .eq('id', registrationId));
+  }
 
   if (regError) {
     throw new Error(`Failed to update registration: ${regError.message}`);
