@@ -5,6 +5,9 @@
 // inside Netlify Functions (server-side) — never sent to the browser.
 
 const { createClient } = require('@supabase/supabase-js');
+// Netlify Functions (and Node < 22) have no global WebSocket. Newer
+// @supabase/supabase-js requires one even though we only use PostgREST here.
+const ws = require('ws');
 
 let cachedClient = null;
 
@@ -21,7 +24,8 @@ function getSupabaseAdmin() {
   }
 
   cachedClient = createClient(url, serviceRoleKey, {
-    auth: { persistSession: false },
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { transport: ws },
   });
 
   return cachedClient;

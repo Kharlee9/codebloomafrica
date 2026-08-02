@@ -4,9 +4,10 @@
   "private": true,
   "description": "CodeBloomAfrica static site with Netlify Functions for Paystack InlineJS v2 + Supabase registration payments",
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "ws": "^8.21.1"
   },
   "engines": {
-    "node": "^22"
+    "node": ">=22"
   }
 }
