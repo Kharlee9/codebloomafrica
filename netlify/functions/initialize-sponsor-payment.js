@@ -1,34 +1,26 @@
-// netlify/functions/initialize-payment.js
+// netlify/functions/initialize-sponsor-payment.js
 //
-// POST /.netlify/functions/initialize-payment
-// Body: { registrationId, email, course }
+// POST /.netlify/functions/initialize-sponsor-payment
+// Body: { sponsorId, email, sponsorCount }
 //
-// Server-side step of the Paystack InlineJS v2 "Resume Transaction" flow:
-// https://paystack.com/docs/developer-tools/inlinejs/#resume-transaction
+// Server-side step of the Paystack InlineJS v2 "Resume Transaction" flow
+// for the sponsor feature — mirrors initialize-payment.js exactly, but:
+//   - reads from/writes to sponsor_registrations / sponsor_payments
+//   - calculates the amount dynamically as sponsorCount × ₦10,000
+//     instead of a flat fee
 //
-// 1. Confirms the registration exists and hasn't already been paid for.
-// 2. Calls Paystack's /transaction/initialize endpoint using the SECRET key
-//    (this must only ever happen server-side).
-// 3. Logs a "pending" row in the payments table for reconciliation.
-// 4. Returns only the access_code + reference to the browser — the secret
-//    key never leaves this function. The browser uses the access_code with
-//    PaystackPop's resumeTransaction() to complete checkout in-page.
+// This is fully isolated from the course-registration flow (different
+// tables, different function), so it can't affect it.
 
 const { getSupabaseAdmin } = require('./utils/supabaseAdmin');
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
-// Flat registration fee in Naira — every course costs the same.
-const REGISTRATION_FEE_NAIRA = 10000;
-
-// Courses offered on the registration form (register.html) — kept here so
-// the server never trusts an arbitrary "course" string from the client.
-const ALLOWED_COURSES = new Set([
-  'UI/UX Design',
-  'Data Analysis',
-  'Product Management',
-  'Digital Marketing',
-]);
+// Per-person sponsorship fee in Naira. The amount sent to Paystack is
+// always sponsorCount × this value — never hardcoded per quantity.
+const PER_SPONSORSHIP_FEE_NAIRA = 10000;
+const MIN_SPONSOR_COUNT = 1;
+const MAX_SPONSOR_COUNT = 10;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -47,21 +39,24 @@ exports.handler = async (event) => {
     return respond(400, { error: 'Invalid JSON body' });
   }
 
-  const { registrationId, email, course } = payload;
+  const { sponsorId, email, sponsorCount } = payload;
 
-  if (!registrationId || !email || !course) {
-    return respond(400, { error: 'registrationId, email and course are required' });
+  if (!sponsorId || !email || !sponsorCount) {
+    return respond(400, { error: 'sponsorId, email and sponsorCount are required' });
   }
 
   if (!isValidEmail(email)) {
     return respond(400, { error: 'A valid email address is required' });
   }
 
-  if (!ALLOWED_COURSES.has(course)) {
-    return respond(400, { error: 'Unrecognized course selection' });
+  const count = Number(sponsorCount);
+  if (!Number.isInteger(count) || count < MIN_SPONSOR_COUNT || count > MAX_SPONSOR_COUNT) {
+    return respond(400, { error: `sponsorCount must be a whole number between ${MIN_SPONSOR_COUNT} and ${MAX_SPONSOR_COUNT}` });
   }
 
-  const amountNaira = REGISTRATION_FEE_NAIRA;
+  // Amount = Number of Sponsors × ₦10,000 — calculated here, never trusted
+  // from the client, and never hardcoded per quantity.
+  const amountNaira = count * PER_SPONSORSHIP_FEE_NAIRA;
 
   let supabase;
   try {
@@ -71,35 +66,33 @@ exports.handler = async (event) => {
     return respond(500, { error: err.message });
   }
 
-  // Confirm the registration exists and isn't already paid for.
-  const { data: registration, error: fetchError } = await supabase
-    .from('registrations')
-    .select('id, paid')
-    .eq('id', registrationId)
+  // Confirm the sponsor registration exists and isn't already paid for.
+  const { data: sponsor, error: fetchError } = await supabase
+    .from('sponsor_registrations')
+    .select('id, paid, number_of_sponsorships')
+    .eq('id', sponsorId)
     .maybeSingle();
 
   if (fetchError) {
-    // Usually means Netlify env vars point at the wrong Supabase project,
-    // the service-role key is invalid, or SUPABASE_URL is mistyped.
-    console.error('Registration lookup failed:', fetchError);
+    console.error('Sponsor registration lookup failed:', fetchError);
     return respond(500, {
-      error: 'Could not look up registration',
+      error: 'Could not look up sponsor registration',
       details: fetchError.message || String(fetchError),
     });
   }
 
-  if (!registration) {
-    return respond(404, { error: 'Registration not found' });
+  if (!sponsor) {
+    return respond(404, { error: 'Sponsor registration not found' });
   }
 
-  if (registration.paid) {
-    return respond(409, { error: 'This registration has already been paid for' });
+  if (sponsor.paid) {
+    return respond(409, { error: 'This sponsorship has already been paid for' });
   }
 
   // Unique, traceable reference for this specific transaction attempt.
-  const reference = `CB-${registrationId}-${Date.now()}`;
+  const reference = `CB-SPONSOR-${sponsorId}-${Date.now()}`;
   // Paystack's initialize endpoint expects amount in kobo (the smallest
-  // unit of NGN), so ₦10,000 must be sent as 1,000,000.
+  // unit of NGN).
   const amountKobo = amountNaira * 100;
 
   try {
@@ -116,9 +109,9 @@ exports.handler = async (event) => {
         reference,
         channels: ['card', 'bank', 'bank_transfer', 'ussd', 'qr', 'mobile_money'],
         metadata: {
-          type: 'registration',
-          registrationId,
-          course,
+          type: 'sponsor',
+          sponsorId,
+          sponsorCount: count,
         },
       }),
     });
@@ -133,11 +126,12 @@ exports.handler = async (event) => {
     // Log the pending attempt so it can be reconciled even if the browser
     // never completes the popup flow — the webhook will also independently
     // confirm this.
-    const { error: insertError } = await supabase.from('payments').insert([
+    const { error: insertError } = await supabase.from('sponsor_payments').insert([
       {
-        registration_id: registrationId,
+        sponsor_id: sponsorId,
         reference,
         amount: amountNaira,
+        currency: 'NGN',
         status: 'pending',
         email,
       },
@@ -146,7 +140,7 @@ exports.handler = async (event) => {
     if (insertError) {
       // Not fatal — Paystack already has the transaction and verify/webhook
       // will upsert this row regardless. Just log it.
-      console.error('Could not log pending payment row:', insertError);
+      console.error('Could not log pending sponsor payment row:', insertError);
     }
 
     // Only the access_code (+ reference, for the browser's own bookkeeping)
@@ -155,9 +149,10 @@ exports.handler = async (event) => {
     return respond(200, {
       access_code: paystackData.data.access_code,
       reference: paystackData.data.reference,
+      amount: amountNaira,
     });
   } catch (err) {
-    console.error('initialize-payment unexpected error:', err);
+    console.error('initialize-sponsor-payment unexpected error:', err);
     return respond(500, { error: 'Unexpected error initializing payment' });
   }
 };

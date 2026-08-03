@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Become a Sponsor — CodeBloomAfrica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="register.css">
+</head>
+<body>
+
+<div class="reg-page">
+
+  <div class="reg-form-col">
+    <a href="index.html" class="logo reg-logo">
+      <img src="images/image1.png" alt="CodeBloomAfrica logo">
+      CodeBloomAfrica
+    </a>
+
+    <div class="reg-form-wrap">
+      <span class="eyebrow">◆ Sponsor</span>
+      <h1>Become a Sponsor.</h1>
+      <p class="reg-sub">Empower one or more students into the CodeBloom Africa Future 500 Cohort and help unlock the next generation of tech leaders.</p>
+
+      <form id="sponsorForm" class="reg-form" novalidate>
+        <div class="reg-row">
+          <div class="reg-field">
+            <label for="firstName">First name</label>
+            <input type="text" id="firstName" name="firstName" placeholder="Jane" required>
+          </div>
+          <div class="reg-field">
+            <label for="lastName">Last name</label>
+            <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+          </div>
+        </div>
+
+        <div class="reg-field">
+          <label for="phone">Phone Number <span class="reg-hint">(Preferably WhatsApp)</span></label>
+          <input type="tel" id="phone" name="phone" placeholder="+234 800 000 0000" required>
+        </div>
+
+        <div class="reg-field">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="jane@email.com" required>
+        </div>
+
+        <div class="reg-field">
+          <label for="sponsorCount">How many people would you like to sponsor?</label>
+          <select id="sponsorCount" name="sponsorCount" required>
+            <option value="" disabled selected>Select a number</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div class="reg-field">
+          <label for="sponsorPreference">Would you like CodeBloom Africa to randomly assign a beneficiary, or do you already have someone you want to sponsor?</label>
+          <select id="sponsorPreference" name="sponsorPreference" required>
+            <option value="Yes (Let CodeBloom Africa choose for me)" selected>Yes (Let CodeBloom Africa choose for me)</option>
+            <option value="No, I have my own beneficiary(ies)">No, I have my own beneficiary(ies)</option>
+          </select>
+        </div>
+
+        <p id="formError" class="reg-error" hidden></p>
+
+        <button type="submit" class="btn btn-dark reg-submit" id="submitBtn">
+          <span id="submitLabel">Proceed to payment</span> <span class="arrow">→</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="reg-flyer-col">
+    <img src="images/sponsor-flyer.webp" alt="Become a CodeBloomAfrica sponsor">
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://js.paystack.co/v2/inline.js"></script>
+<script src="sponsor.js"></script>
+</body>
+</html>

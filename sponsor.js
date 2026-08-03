@@ -1,44 +1,34 @@
-// register.js
+// sponsor.js
 //
-// Registration + payment flow, rebuilt on Paystack InlineJS v2 using the
-// "Resume Transaction" pattern:
+// Sponsor registration + payment flow. Mirrors register.js's Paystack
+// InlineJS v2 "Resume Transaction" pattern exactly:
 // https://paystack.com/docs/developer-tools/inlinejs/#resume-transaction
 //
-//   1. Save the registration to Supabase (paid = false), including the
-//      work status, education, beginner-course-awareness, and
-//      volunteering-interest fields collected on the form.
-//   2. Ask initialize-payment (server-side, uses the SECRET key) to
-//      initialize a Paystack transaction and return an access_code.
+//   1. Save the sponsor registration to Supabase (paid = false).
+//   2. Ask initialize-sponsor-payment (server-side, uses the SECRET key)
+//      to initialize a Paystack transaction for
+//      (number of people sponsored × ₦10,000) and return an access_code.
 //   3. Open the official Paystack popup in-page with
 //      popup.resumeTransaction(access_code, { onSuccess, onCancel, onError }).
-//      This single popup lets the customer pay with card, bank transfer,
-//      USSD, QR, or mobile money — Paystack handles all channel UI itself.
-//   4. On success, call verify-payment (server-side) to re-check the
-//      transaction directly with Paystack and persist the result — the
-//      client-side onSuccess callback is never trusted on its own.
-//   5. Redirect to payment-success.html.
+//   4. On success, call verify-sponsor-payment (server-side) to re-check
+//      the transaction directly with Paystack and persist the result —
+//      the client-side onSuccess callback is never trusted on its own.
+//   5. Redirect to sponsor-success.html.
+//
+// This is a fully separate flow from register.js / registrations table —
+// it writes to sponsor_registrations / sponsor_payments only, so it can't
+// affect the existing course-registration flow.
 
-// ============================================================
-// CONFIG — fill these in before going live
-// ============================================================
 // The Supabase anon (publishable) key is safe to expose in browser code —
-// it can ONLY insert new registration rows (see supabase-schema.sql RLS
-// policy).
+// it can ONLY insert new sponsor rows (see supabase-schema.sql RLS policy).
 const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';
-
-// No Paystack key is hardcoded here. This flow uses PaystackPop's
-// resumeTransaction(access_code) — the transaction (and the Paystack
-// public key it's tied to) was already created server-side by
-// initialize-payment.js using the SECRET key. The secret key never
-// reaches the browser, and no public key is needed on this page either.
-// ============================================================
 
 const supabaseClient = SUPABASE_URL.startsWith('http')
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-const form = document.getElementById('registrationForm');
+const form = document.getElementById('sponsorForm');
 const submitBtn = document.getElementById('submitBtn');
 const submitLabel = document.getElementById('submitLabel');
 const formError = document.getElementById('formError');
@@ -64,26 +54,13 @@ form.addEventListener('submit', async (e) => {
 
   const firstName = document.getElementById('firstName').value.trim();
   const lastName = document.getElementById('lastName').value.trim();
-  const email = document.getElementById('email').value.trim();
   const phone = document.getElementById('phone').value.trim();
-  const course = document.getElementById('course').value;
-  const workStatus = document.getElementById('workStatus').value;
-  const education = document.getElementById('education').value;
-  const awareBeginnerCourse = document.getElementById('awareBeginnerCourse').value;
-  const volunteeringInterest = document.getElementById('volunteeringInterest').value;
+  const email = document.getElementById('email').value.trim();
+  const sponsorCountRaw = document.getElementById('sponsorCount').value;
+  const sponsorPreference = document.getElementById('sponsorPreference').value;
 
   // ---- Client-side validation ----
-  if (
-    !firstName ||
-    !lastName ||
-    !email ||
-    !phone ||
-    !course ||
-    !workStatus ||
-    !education ||
-    !awareBeginnerCourse ||
-    !volunteeringInterest
-  ) {
+  if (!firstName || !lastName || !phone || !email || !sponsorCountRaw || !sponsorPreference) {
     showError('Please fill in every field before continuing.');
     return;
   }
@@ -100,46 +77,48 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  const sponsorCount = parseInt(sponsorCountRaw, 10);
+  if (!Number.isInteger(sponsorCount) || sponsorCount < 1 || sponsorCount > 10) {
+    showError('Please select how many people you would like to sponsor.');
+    return;
+  }
+
   if (!supabaseClient) {
-    showError('Registration is not configured yet. Please contact the site admin.');
-    console.error('Supabase client not initialized — check SUPABASE_URL / SUPABASE_ANON_KEY in register.js');
+    showError('Sponsorship registration is not configured yet. Please contact the site admin.');
+    console.error('Supabase client not initialized — check SUPABASE_URL / SUPABASE_ANON_KEY in sponsor.js');
     return;
   }
 
   if (typeof PaystackPop === 'undefined') {
     showError('Payment is not available right now. Please refresh the page and try again.');
-    console.error('PaystackPop is not defined — check that the InlineJS v2 script tag loaded in register.html');
+    console.error('PaystackPop is not defined — check that the InlineJS v2 script tag loaded in sponsor.html');
     return;
   }
 
   setLoading(true, 'Saving your details…');
 
-  // Generate the registration ID client-side (instead of relying on
-  // Postgres RETURNING, which RLS SELECT policies would otherwise block
-  // for the anon/public key). This ID is what ties the registration to
-  // its payment record end-to-end.
-  const registrationId = crypto.randomUUID();
+  // Generated client-side, same pattern as register.js — ties the sponsor
+  // registration to its payment record end-to-end without relying on
+  // Postgres RETURNING (which RLS would block for the anon key).
+  const sponsorId = crypto.randomUUID();
 
   try {
-    // ---- 1. Save the registration to Supabase BEFORE payment (paid = false by default) ----
-    const { error: insertError } = await supabaseClient.from('registrations').insert([
+    // ---- 1. Save the sponsor registration to Supabase BEFORE payment ----
+    const { error: insertError } = await supabaseClient.from('sponsor_registrations').insert([
       {
-        id: registrationId,
+        id: sponsorId,
         first_name: firstName,
         last_name: lastName,
-        email: email,
         phone: phone,
-        course: course,
-        work_status: workStatus,
-        education: education,
-        aware_of_beginner_course: awareBeginnerCourse,
-        interested_in_volunteering: volunteeringInterest,
+        email: email,
+        number_of_sponsorships: sponsorCount,
+        sponsor_preference: sponsorPreference,
       },
     ]);
 
     if (insertError) {
       console.error('Supabase insert error:', insertError);
-      showError('Something went wrong saving your registration. Please try again.');
+      showError('Something went wrong saving your details. Please try again.');
       setLoading(false, 'Proceed to payment');
       return;
     }
@@ -147,16 +126,16 @@ form.addEventListener('submit', async (e) => {
     // ---- 2. Ask our Netlify Function to initialize the Paystack transaction ----
     setLoading(true, 'Preparing payment…');
 
-    const initRes = await fetch('/.netlify/functions/initialize-payment', {
+    const initRes = await fetch('/.netlify/functions/initialize-sponsor-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registrationId, email, course }),
+      body: JSON.stringify({ sponsorId, email, sponsorCount }),
     });
 
     const initData = await initRes.json();
 
     if (!initRes.ok || !initData.access_code) {
-      console.error('initialize-payment error:', initData);
+      console.error('initialize-sponsor-payment error:', initData);
       showError(initData.error || 'Could not start payment. Please try again.');
       setLoading(false, 'Proceed to payment');
       return;
@@ -174,7 +153,7 @@ form.addEventListener('submit', async (e) => {
 
         try {
           const verifyRes = await fetch(
-            `/.netlify/functions/verify-payment?reference=${encodeURIComponent(transaction.reference)}`
+            `/.netlify/functions/verify-sponsor-payment?reference=${encodeURIComponent(transaction.reference)}`
           );
           const verifyData = await verifyRes.json();
 
@@ -182,17 +161,17 @@ form.addEventListener('submit', async (e) => {
             // ---- 5. Success — go to the success page ----
             const params = new URLSearchParams({
               reference: transaction.reference,
-              course: verifyData.course || course,
+              count: String(verifyData.sponsor_count || sponsorCount),
             });
-            window.location.href = `payment-success.html?${params.toString()}`;
+            window.location.href = `sponsor-success.html?${params.toString()}`;
             return;
           }
 
-          console.error('verify-payment did not confirm success:', verifyData);
+          console.error('verify-sponsor-payment did not confirm success:', verifyData);
           showError('We could not confirm your payment. If you were charged, please contact support with your payment reference.');
           setLoading(false, 'Proceed to payment');
         } catch (err) {
-          console.error('verify-payment request failed:', err);
+          console.error('verify-sponsor-payment request failed:', err);
           showError('We ran into a connection issue confirming your payment. Please contact support with your payment reference before trying again.');
           setLoading(false, 'Proceed to payment');
         }
@@ -207,7 +186,7 @@ form.addEventListener('submit', async (e) => {
       },
     });
   } catch (err) {
-    console.error('Unexpected registration error:', err);
+    console.error('Unexpected sponsor registration error:', err);
     showError('Unexpected error. Please check your connection and try again.');
     setLoading(false, 'Proceed to payment');
   }

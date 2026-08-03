@@ -11,6 +11,10 @@ create table if not exists registrations (
   email text not null,
   phone text not null,
   course text not null,
+  work_status text not null,
+  education text not null,
+  aware_of_beginner_course text not null default 'Yes', -- 'Yes' | 'No'
+  interested_in_volunteering text not null default 'Yes', -- 'Yes' | 'No'
   created_at timestamptz default now(),
 
   -- Payment status fields, kept in sync by the verify-payment function
@@ -32,6 +36,14 @@ alter table registrations add column if not exists payment_reference text;
 alter table registrations add column if not exists payment_date timestamptz;
 alter table registrations add column if not exists payment_amount numeric;
 alter table registrations add column if not exists payment_transaction_id bigint;
+
+-- Profile fields added for the expanded registration form. Existing rows
+-- get sensible defaults so the NOT NULL constraints below don't fail on
+-- historical data; new registrations always submit real values.
+alter table registrations add column if not exists work_status text not null default 'Not specified';
+alter table registrations add column if not exists education text not null default 'Not specified';
+alter table registrations add column if not exists aware_of_beginner_course text not null default 'Yes';
+alter table registrations add column if not exists interested_in_volunteering text not null default 'Yes';
 
 alter table registrations enable row level security;
 
@@ -71,6 +83,71 @@ alter table payments enable row level security;
 
 -- Intentionally NO policies for the anon key: the payments table is
 -- written to and read from only by Netlify Functions using the
+-- SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS entirely. The public
+-- anon key has zero access to this table.
+
+-- ============================================================
+-- SPONSOR_REGISTRATIONS
+-- ============================================================
+-- Fully separate from `registrations` — the sponsor flow (sponsor.html /
+-- sponsor.js) never touches the course-registration tables, so it can't
+-- affect that flow.
+create table if not exists sponsor_registrations (
+  id uuid primary key default gen_random_uuid(),
+  first_name text not null,
+  last_name text not null,
+  phone text not null,
+  email text not null,
+  number_of_sponsorships int not null check (number_of_sponsorships between 1 and 10),
+  sponsor_preference text not null default 'Yes (Let CodeBloom Africa choose for me)',
+  created_at timestamptz default now(),
+
+  -- Payment status fields, kept in sync by the verify-sponsor-payment
+  -- function and the Paystack webhook (both write through the service
+  -- role key, so they bypass RLS below).
+  paid boolean not null default false,
+  payment_status text not null default 'pending', -- pending | success | failed
+  payment_reference text,
+  payment_date timestamptz,
+  payment_amount numeric, -- number_of_sponsorships × ₦10,000
+  payment_transaction_id bigint -- Paystack's numeric transaction id
+);
+
+alter table sponsor_registrations enable row level security;
+
+-- The anon (public) key may only ever INSERT a new sponsor registration —
+-- never read, update, or delete existing rows. All payment-status writes
+-- happen server-side via the service role key in Netlify Functions.
+drop policy if exists "Allow public sponsor inserts" on sponsor_registrations;
+create policy "Allow public sponsor inserts"
+on sponsor_registrations
+for insert
+to anon
+with check (true);
+
+-- ============================================================
+-- SPONSOR_PAYMENTS  (append-only ledger, one row per transaction attempt)
+-- ============================================================
+create table if not exists sponsor_payments (
+  id uuid primary key default gen_random_uuid(),
+  sponsor_id uuid not null references sponsor_registrations(id) on delete cascade,
+  reference text not null unique,
+  amount numeric not null,
+  currency text not null default 'NGN',
+  status text not null default 'pending', -- pending | success | failed
+  email text,
+  paid_at timestamptz,
+  transaction_id bigint, -- Paystack's numeric transaction id
+  raw_response jsonb, -- full Paystack transaction payload, for audit/support
+  created_at timestamptz default now()
+);
+
+create index if not exists sponsor_payments_sponsor_id_idx on sponsor_payments(sponsor_id);
+
+alter table sponsor_payments enable row level security;
+
+-- Intentionally NO policies for the anon key: the sponsor_payments table
+-- is written to and read from only by Netlify Functions using the
 -- SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS entirely. The public
 -- anon key has zero access to this table.
 

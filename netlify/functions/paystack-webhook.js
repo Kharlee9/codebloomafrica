@@ -18,6 +18,7 @@
 const crypto = require('crypto');
 const { getSupabaseAdmin } = require('./utils/supabaseAdmin');
 const { verifyAndRecordPayment } = require('./utils/paystackVerify');
+const { verifyAndRecordSponsorPayment } = require('./utils/sponsorPaystackVerify');
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
@@ -61,9 +62,22 @@ exports.handler = async (event) => {
     return respond(200, { received: true });
   }
 
+  // Paystack allows only one webhook URL per account, so this single
+  // endpoint receives events for BOTH the course-registration flow and the
+  // sponsor flow. initialize-payment.js and initialize-sponsor-payment.js
+  // each tag their transaction's metadata.type accordingly, so route to
+  // the matching verify util. Transactions initialized before this field
+  // existed have no metadata.type — treat those as the (older) registration
+  // flow for backward compatibility.
+  const transactionType = evt.data && evt.data.metadata && evt.data.metadata.type;
+
   try {
     const supabase = getSupabaseAdmin();
-    await verifyAndRecordPayment(reference, supabase, PAYSTACK_SECRET_KEY);
+    if (transactionType === 'sponsor') {
+      await verifyAndRecordSponsorPayment(reference, supabase, PAYSTACK_SECRET_KEY);
+    } else {
+      await verifyAndRecordPayment(reference, supabase, PAYSTACK_SECRET_KEY);
+    }
     return respond(200, { received: true });
   } catch (err) {
     // Log the failure but still return 200 for already-processed/duplicate

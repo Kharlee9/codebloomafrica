@@ -60,6 +60,48 @@
           </select>
         </div>
 
+        <div class="reg-field">
+          <label for="workStatus">Current Work Status</label>
+          <select id="workStatus" name="workStatus" required>
+            <option value="" disabled selected>Select an option</option>
+            <option value="Student">Student</option>
+            <option value="Graduate">Graduate</option>
+            <option value="NYSC Corper">NYSC Corper</option>
+            <option value="Working Professional (Employed)">Working Professional (Employed)</option>
+            <option value="Self Employed">Self Employed</option>
+            <option value="Unemployed">Unemployed</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="reg-field">
+          <label for="education">Education</label>
+          <select id="education" name="education" required>
+            <option value="" disabled selected>Select an option</option>
+            <option value="Secondary School">Secondary School</option>
+            <option value="OND/NCE">OND/NCE</option>
+            <option value="HND">HND</option>
+            <option value="Bachelor's Degree">Bachelor's Degree</option>
+            <option value="Postgraduate">Postgraduate</option>
+          </select>
+        </div>
+
+        <div class="reg-field">
+          <label for="awareBeginnerCourse">Are you aware this is a beginner's course?</label>
+          <select id="awareBeginnerCourse" name="awareBeginnerCourse" required>
+            <option value="Yes" selected>Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="reg-field">
+          <label for="volunteeringInterest">Are you interested in volunteering with CodeBloom Africa to gain practical experience?</label>
+          <select id="volunteeringInterest" name="volunteeringInterest" required>
+            <option value="Yes" selected>Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
         <p id="formError" class="reg-error" hidden></p>
 
         <button type="submit" class="btn btn-dark reg-submit" id="submitBtn">
