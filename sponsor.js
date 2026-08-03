@@ -21,8 +21,8 @@
 
 // The Supabase anon (publishable) key is safe to expose in browser code —
 // it can ONLY insert new sponsor rows (see supabase-schema.sql RLS policy).
-const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';
+const SUPABASE_URL = 'https://evuyhhritkfoxexbspco.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_x4i6KGTM88EjNrVG6Hc0ew_1bAiFkcy';
 
 const supabaseClient = SUPABASE_URL.startsWith('http')
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
