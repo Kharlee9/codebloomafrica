@@ -65,11 +65,11 @@ function setLoading(isLoading, label) {
 // popup close to success page feeling deliberate rather than frozen.
 function showPaymentOverlay(text) {
   paymentOverlayText.textContent = text;
-  paymentOverlay.hidden = false;
+paymentOverlay.style.display = 'flex'
 }
 
 function hidePaymentOverlay() {
-  paymentOverlay.hidden = true;
+paymentOverlay.style.display = 'none'
 }
 
 hidePaymentOverlay()
