@@ -72,6 +72,8 @@ function hidePaymentOverlay() {
   paymentOverlay.hidden = true;
 }
 
+hidePaymentOverlay()
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
