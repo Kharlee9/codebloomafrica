@@ -66,27 +66,32 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
 
-  const firstName = document.getElementById('firstName').value.trim();
-  const lastName = document.getElementById('lastName').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const sponsorCountRaw = document.getElementById('sponsorCount').value;
-  const sponsorPreference = document.getElementById('sponsorPreference').value;
-  const socialMediaAcknowledgement = document.getElementById('socialMediaAcknowledgement').value;
+const firstName = document.getElementById('firstName').value.trim();
+const lastName = document.getElementById('lastName').value.trim();
+const phone = document.getElementById('phone').value.trim();
+const email = document.getElementById('email').value.trim();
+const sponsorCountRaw = document.getElementById('sponsorCount').value;
+const sponsorPreference = document.getElementById('sponsorPreference').value;
+const socialMediaAcknowledgement = document.getElementById('socialMediaAcknowledgement').value;
 
-  // ---- Client-side validation ----
-  if (
-    !firstName ||
-    !lastName ||
-    !phone ||
-    !email ||
-    !sponsorCountRaw ||
-    !sponsorPreference ||
-    !socialMediaAcknowledgement
-  ) {
-    showError('Please fill in every field before continuing.');
-    return;
-  }
+// ---- Client-side validation ----
+const fields = [
+  { id: 'firstName', value: firstName },
+  { id: 'lastName', value: lastName },
+  { id: 'phone', value: phone },
+  { id: 'email', value: email },
+  { id: 'sponsorCount', value: sponsorCountRaw },
+  { id: 'sponsorPreference', value: sponsorPreference },
+  { id: 'socialMediaAcknowledgement', value: socialMediaAcknowledgement },
+];
+
+const firstEmpty = fields.find(f => !f.value);
+
+if (firstEmpty) {
+  showError('Please fill in every field before continuing.');
+  document.getElementById(firstEmpty.id).focus();
+  return;
+}
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailPattern.test(email)) {
