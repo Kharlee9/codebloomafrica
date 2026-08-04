@@ -24,8 +24,8 @@
 // The Supabase anon (publishable) key is safe to expose in browser code —
 // it can ONLY insert new registration rows (see supabase-schema.sql RLS
 // policy).
-const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';
+const SUPABASE_URL = 'https://evuyhhritkfoxexbspco.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2dXloaHJpdGtmb3hleGJzcGNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3ODQ2NTYsImV4cCI6MjEwMTM2MDY1Nn0.D7UGpZgA9sJcpLIMZB8_js_yEChFkn6JDThXYMzOgqk';
 
 // No Paystack key is hardcoded here. This flow uses PaystackPop's
 // resumeTransaction(access_code) — the transaction (and the Paystack
