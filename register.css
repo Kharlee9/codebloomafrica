@@ -2,6 +2,7 @@
   display:grid;
   grid-template-columns:1fr 1fr;
   min-height:100vh;
+  align-items: start;
 }
 
 .reg-form-col{
@@ -121,10 +122,11 @@ input {
 }
 
 .reg-flyer-col{
-  background:var(--black);
   display:flex;
   align-items:center;
   justify-content:center;
+  position: sticky;
+  top: 0px;
 }
 
 .reg-flyer-col img{
