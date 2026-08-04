@@ -24,8 +24,8 @@
 // The Supabase anon (publishable) key is safe to expose in browser code —
 // it can ONLY insert new registration rows (see supabase-schema.sql RLS
 // policy).
-const SUPABASE_URL = 'https://evuyhhritkfoxexbspco.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_x4i6KGTM88EjNrVG6Hc0ew_1bAiFkcy';
+const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';
 
 // No Paystack key is hardcoded here. This flow uses PaystackPop's
 // resumeTransaction(access_code) — the transaction (and the Paystack
@@ -42,6 +42,8 @@ const form = document.getElementById('registrationForm');
 const submitBtn = document.getElementById('submitBtn');
 const submitLabel = document.getElementById('submitLabel');
 const formError = document.getElementById('formError');
+const paymentOverlay = document.getElementById('paymentOverlay');
+const paymentOverlayText = document.getElementById('paymentOverlayText');
 
 function showError(message) {
   formError.textContent = message;
@@ -58,6 +60,18 @@ function setLoading(isLoading, label) {
   submitLabel.textContent = label;
 }
 
+// Full-screen blurred overlay shown once Paystack reports success, while
+// we re-verify the transaction server-side — keeps the transition from
+// popup close to success page feeling deliberate rather than frozen.
+function showPaymentOverlay(text) {
+  paymentOverlayText.textContent = text;
+  paymentOverlay.hidden = false;
+}
+
+function hidePaymentOverlay() {
+  paymentOverlay.hidden = true;
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
@@ -69,6 +83,8 @@ form.addEventListener('submit', async (e) => {
   const course = document.getElementById('course').value;
   const workStatus = document.getElementById('workStatus').value;
   const education = document.getElementById('education').value;
+  const stateOfResidence = document.getElementById('stateOfResidence').value;
+  const dateOfBirth = document.getElementById('dateOfBirth').value;
   const awareBeginnerCourse = document.getElementById('awareBeginnerCourse').value;
   const volunteeringInterest = document.getElementById('volunteeringInterest').value;
 
@@ -81,6 +97,8 @@ form.addEventListener('submit', async (e) => {
     !course ||
     !workStatus ||
     !education ||
+    !stateOfResidence ||
+    !dateOfBirth ||
     !awareBeginnerCourse ||
     !volunteeringInterest
   ) {
@@ -97,6 +115,12 @@ form.addEventListener('submit', async (e) => {
   const phonePattern = /^[+0-9\s-]{7,20}$/;
   if (!phonePattern.test(phone)) {
     showError('Please enter a valid phone number.');
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  if (dateOfBirth > today) {
+    showError('Date of birth cannot be in the future.');
     return;
   }
 
@@ -132,6 +156,8 @@ form.addEventListener('submit', async (e) => {
         course: course,
         work_status: workStatus,
         education: education,
+        state_of_residence: stateOfResidence,
+        date_of_birth: dateOfBirth,
         aware_of_beginner_course: awareBeginnerCourse,
         interested_in_volunteering: volunteeringInterest,
       },
@@ -170,6 +196,10 @@ form.addEventListener('submit', async (e) => {
     popup.resumeTransaction(initData.access_code, {
       onSuccess: async (transaction) => {
         // ---- 4. Never trust the client callback alone — re-verify server-side ----
+        // Show the full-screen confirmation overlay right away so the
+        // transition from the closing Paystack popup to the success page
+        // feels deliberate, not frozen.
+        showPaymentOverlay('Confirming your payment…');
         setLoading(true, 'Confirming payment…');
 
         try {
@@ -189,10 +219,12 @@ form.addEventListener('submit', async (e) => {
           }
 
           console.error('verify-payment did not confirm success:', verifyData);
+          hidePaymentOverlay();
           showError('We could not confirm your payment. If you were charged, please contact support with your payment reference.');
           setLoading(false, 'Proceed to payment');
         } catch (err) {
           console.error('verify-payment request failed:', err);
+          hidePaymentOverlay();
           showError('We ran into a connection issue confirming your payment. Please contact support with your payment reference before trying again.');
           setLoading(false, 'Proceed to payment');
         }

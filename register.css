@@ -141,3 +141,51 @@ input {
   .reg-form-wrap{margin:24px 0;}
   .reg-row{grid-template-columns:1fr;}
 }
+
+/* ============================================================
+   PAYMENT CONFIRMATION OVERLAY
+   Shown after the Paystack popup reports success, while the app
+   re-verifies the transaction server-side before redirecting —
+   so the user never sees a frozen page during that gap.
+   ============================================================ */
+.payment-overlay{
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:22px;
+  background:rgba(246,245,238,0.78);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  animation:payment-overlay-fade-in .25s ease;
+}
+
+.payment-overlay-spinner{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  border:4px solid var(--border);
+  border-top-color:var(--black);
+  animation:payment-overlay-spin .8s linear infinite;
+}
+
+.payment-overlay-text{
+  font-family:'Poppins',sans-serif;
+  font-weight:600;
+  font-size:15px;
+  color:var(--black);
+  text-align:center;
+  padding:0 24px;
+}
+
+@keyframes payment-overlay-spin{
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes payment-overlay-fade-in{
+  from{ opacity:0; }
+  to{ opacity:1; }
+}

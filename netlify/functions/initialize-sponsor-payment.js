@@ -20,7 +20,10 @@ const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 // always sponsorCount × this value — never hardcoded per quantity.
 const PER_SPONSORSHIP_FEE_NAIRA = 10000;
 const MIN_SPONSOR_COUNT = 1;
-const MAX_SPONSOR_COUNT = 10;
+// No real upper limit on how many people someone can sponsor — this is
+// only a generous sanity ceiling to guard against accidental fat-finger
+// input (e.g. an extra typed zero), not a business rule.
+const MAX_SPONSOR_COUNT = 100000;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {

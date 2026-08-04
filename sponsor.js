@@ -21,8 +21,8 @@
 
 // The Supabase anon (publishable) key is safe to expose in browser code —
 // it can ONLY insert new sponsor rows (see supabase-schema.sql RLS policy).
-const SUPABASE_URL = 'https://evuyhhritkfoxexbspco.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_x4i6KGTM88EjNrVG6Hc0ew_1bAiFkcy';
+const SUPABASE_URL = 'https://imhxynxgozcgmectrrbk.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_0fnv8uQOhJTK2V4t3VsiCQ_DY-tkMig';
 
 const supabaseClient = SUPABASE_URL.startsWith('http')
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -32,6 +32,8 @@ const form = document.getElementById('sponsorForm');
 const submitBtn = document.getElementById('submitBtn');
 const submitLabel = document.getElementById('submitLabel');
 const formError = document.getElementById('formError');
+const paymentOverlay = document.getElementById('paymentOverlay');
+const paymentOverlayText = document.getElementById('paymentOverlayText');
 
 function showError(message) {
   formError.textContent = message;
@@ -48,6 +50,18 @@ function setLoading(isLoading, label) {
   submitLabel.textContent = label;
 }
 
+// Full-screen blurred overlay shown once Paystack reports success, while
+// we re-verify the transaction server-side — keeps the transition from
+// popup close to success page feeling deliberate rather than frozen.
+function showPaymentOverlay(text) {
+  paymentOverlayText.textContent = text;
+  paymentOverlay.hidden = false;
+}
+
+function hidePaymentOverlay() {
+  paymentOverlay.hidden = true;
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearError();
@@ -58,9 +72,18 @@ form.addEventListener('submit', async (e) => {
   const email = document.getElementById('email').value.trim();
   const sponsorCountRaw = document.getElementById('sponsorCount').value;
   const sponsorPreference = document.getElementById('sponsorPreference').value;
+  const socialMediaAcknowledgement = document.getElementById('socialMediaAcknowledgement').value;
 
   // ---- Client-side validation ----
-  if (!firstName || !lastName || !phone || !email || !sponsorCountRaw || !sponsorPreference) {
+  if (
+    !firstName ||
+    !lastName ||
+    !phone ||
+    !email ||
+    !sponsorCountRaw ||
+    !sponsorPreference ||
+    !socialMediaAcknowledgement
+  ) {
     showError('Please fill in every field before continuing.');
     return;
   }
@@ -77,9 +100,11 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  // Any positive whole number is allowed — no upper cap on how many
+  // people someone can sponsor.
   const sponsorCount = parseInt(sponsorCountRaw, 10);
-  if (!Number.isInteger(sponsorCount) || sponsorCount < 1 || sponsorCount > 10) {
-    showError('Please select how many people you would like to sponsor.');
+  if (!Number.isInteger(sponsorCount) || sponsorCount < 1 || String(sponsorCount) !== sponsorCountRaw.trim()) {
+    showError('Please enter a valid whole number of people to sponsor (1 or more).');
     return;
   }
 
@@ -113,6 +138,7 @@ form.addEventListener('submit', async (e) => {
         email: email,
         number_of_sponsorships: sponsorCount,
         sponsor_preference: sponsorPreference,
+        social_media_acknowledgement: socialMediaAcknowledgement,
       },
     ]);
 
@@ -149,6 +175,7 @@ form.addEventListener('submit', async (e) => {
     popup.resumeTransaction(initData.access_code, {
       onSuccess: async (transaction) => {
         // ---- 4. Never trust the client callback alone — re-verify server-side ----
+        showPaymentOverlay('Confirming your payment…');
         setLoading(true, 'Confirming payment…');
 
         try {
@@ -168,10 +195,12 @@ form.addEventListener('submit', async (e) => {
           }
 
           console.error('verify-sponsor-payment did not confirm success:', verifyData);
+          hidePaymentOverlay();
           showError('We could not confirm your payment. If you were charged, please contact support with your payment reference.');
           setLoading(false, 'Proceed to payment');
         } catch (err) {
           console.error('verify-sponsor-payment request failed:', err);
+          hidePaymentOverlay();
           showError('We ran into a connection issue confirming your payment. Please contact support with your payment reference before trying again.');
           setLoading(false, 'Proceed to payment');
         }

@@ -24,7 +24,9 @@ const REGISTRATION_FEE_NAIRA = 10000;
 // Courses offered on the registration form (register.html) — kept here so
 // the server never trusts an arbitrary "course" string from the client.
 const ALLOWED_COURSES = new Set([
+  'Web Development',
   'UI/UX Design',
+  'AI Video Creation',
   'Data Analysis',
   'Product Management',
   'Digital Marketing',
