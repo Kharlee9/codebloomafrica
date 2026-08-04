@@ -79,35 +79,39 @@ form.addEventListener('submit', async (e) => {
   clearError();
 
   const firstName = document.getElementById('firstName').value.trim();
-  const lastName = document.getElementById('lastName').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const phone = document.getElementById('phone').value.trim();
-  const course = document.getElementById('course').value;
-  const workStatus = document.getElementById('workStatus').value;
-  const education = document.getElementById('education').value;
-  const stateOfResidence = document.getElementById('stateOfResidence').value;
-  const dateOfBirth = document.getElementById('dateOfBirth').value;
-  const awareBeginnerCourse = document.getElementById('awareBeginnerCourse').value;
-  const volunteeringInterest = document.getElementById('volunteeringInterest').value;
+const lastName = document.getElementById('lastName').value.trim();
+const email = document.getElementById('email').value.trim();
+const phone = document.getElementById('phone').value.trim();
+const course = document.getElementById('course').value;
+const workStatus = document.getElementById('workStatus').value;
+const education = document.getElementById('education').value;
+const stateOfResidence = document.getElementById('stateOfResidence').value;
+const dateOfBirth = document.getElementById('dateOfBirth').value;
+const awareBeginnerCourse = document.getElementById('awareBeginnerCourse').value;
+const volunteeringInterest = document.getElementById('volunteeringInterest').value;
 
-  // ---- Client-side validation ----
-  if (
-    !firstName ||
-    !lastName ||
-    !email ||
-    !phone ||
-    !course ||
-    !workStatus ||
-    !education ||
-    !stateOfResidence ||
-    !dateOfBirth ||
-    !awareBeginnerCourse ||
-    !volunteeringInterest
-  ) {
-    showError('Please fill in every field before continuing.');
-    return;
-  }
+// ---- Client-side validation ----
+const fields = [
+  { id: 'firstName', value: firstName },
+  { id: 'lastName', value: lastName },
+  { id: 'email', value: email },
+  { id: 'phone', value: phone },
+  { id: 'course', value: course },
+  { id: 'workStatus', value: workStatus },
+  { id: 'education', value: education },
+  { id: 'stateOfResidence', value: stateOfResidence },
+  { id: 'dateOfBirth', value: dateOfBirth },
+  { id: 'awareBeginnerCourse', value: awareBeginnerCourse },
+  { id: 'volunteeringInterest', value: volunteeringInterest },
+];
 
+const firstEmpty = fields.find(f => !f.value);
+
+if (firstEmpty) {
+  showError('Please fill in every field before continuing.');
+  document.getElementById(firstEmpty.id).focus();
+  return;
+}
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailPattern.test(email)) {
     showError('Please enter a valid email address.');
