@@ -19,7 +19,7 @@ const { getSupabaseAdmin } = require('./utils/supabaseAdmin');
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
 // Flat registration fee in Naira — every course costs the same.
-const REGISTRATION_FEE_NAIRA = 10000;
+const REGISTRATION_FEE_NAIRA = 100;
 
 // Courses offered on the registration form (register.html) — kept here so
 // the server never trusts an arbitrary "course" string from the client.
